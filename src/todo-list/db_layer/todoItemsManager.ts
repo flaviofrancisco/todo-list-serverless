@@ -105,6 +105,18 @@ export class ToDoItemsManager {
           attachmentUrl: result.Item['attachmentUrl']
         };
       }
+
+      async deleteTodo(id: string, userId: string): Promise<boolean> {
+        const result = await this.docClient.delete({
+          TableName: this.todoItemsTable,
+          Key:{
+              id: id,
+              userId: userId
+          }
+        }).promise();
+        console.log('Deleted item', result);
+        return true;
+      }
 }
 
 function createDynamoDBClient() {

@@ -41,3 +41,9 @@ export async function updateTodo(
     attachmentUrl: updateTodoRequest.attachmentUrl
   });
 }
+
+export async function deleteTodo(
+  id:string
+): Promise<boolean> {
+  return await todoItemsManager.deleteTodo(id, userId);
+}
