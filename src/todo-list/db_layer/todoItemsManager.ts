@@ -1,12 +1,20 @@
 import * as AWS  from 'aws-sdk'
+import * as uuid from 'uuid'
 import { DocumentClient } from 'aws-sdk/clients/dynamodb'
 import { TodoItem } from './todoItems'
 import { UpdateTodoItem } from './updateTodoItem'
+import { CreateTodoResponse } from '../responses/CreateToDoItemResponse'
 
 const AWSXRay = require('aws-xray-sdk')
 const XAWS = AWSXRay.captureAWS(AWS)
 
 const userIdIndex = process.env.USER_ID_INDEX
+const urlExpiration = process.env.SIGNED_URL_EXPIRATION
+const bucketName = process.env.IMAGES_S3_BUCKET
+
+const s3 = new XAWS.S3({
+  signatureVersion: 'v4'
+})
 
 export class ToDoItemsManager {
     
@@ -33,13 +41,22 @@ export class ToDoItemsManager {
         return items as TodoItem[]
       }
       
-      async createTodo(todoItem: TodoItem): Promise<TodoItem> {
+      async createTodo(todoItem: TodoItem): Promise<CreateTodoResponse> {
+
+        const imageId = uuid.v4()
+        const uploadUrl = getUploadUrl(imageId);
+
+        todoItem.attachmentUrl = `https://${bucketName}.s3.amazonaws.com/${imageId}`;
+
         await this.docClient.put({
           TableName: this.todoItemsTable,
           Item: todoItem
         }).promise()
     
-        return todoItem
+        return {
+          ...todoItem,
+          uploadUrl
+        }
       }  
       
       async updateTodo(todoItem: UpdateTodoItem): Promise<TodoItem> {
@@ -101,3 +118,11 @@ function createDynamoDBClient() {
   
     return new XAWS.DynamoDB.DocumentClient()
   }  
+
+  function getUploadUrl(imageId: string) {
+    return s3.getSignedUrl('putObject', {
+      Bucket: bucketName,
+      Key: imageId,
+      Expires: +urlExpiration
+    })
+  }

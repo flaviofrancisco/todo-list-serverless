@@ -25,8 +25,7 @@ export async function createTodo(
       name: createTodoRequest.name,      
       createdAt: new Date().toISOString(),
       dueDate: createTodoRequest.dueDate,
-      done: false,
-      attachmentUrl: null
+      done: false
     })
   }
 
