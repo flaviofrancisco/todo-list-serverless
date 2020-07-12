@@ -1,6 +1,6 @@
 import { APIGatewayProxyHandler, APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
 import { createTodo } from '../../controllers/todoItemsController'
-import { CreateTodoRequest } from '../../requests/CreateToDoItemRequest'
+import { CreateTodoRequest } from '../../requests/createToDoItemRequest'
 
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   

@@ -88,12 +88,23 @@ functions:
     handler: src/todo-list/lambda/http/deleteTodoItem.handler
     events:
       - http:
-          method: delete
+          method: delete/{id}
           path: todos
           cors: true          
           documentation:
             summary: Deletes a to do item.
-            descriptions: Deletes a to do item.            
+            descriptions: Deletes a to do item.
+
+  GetTodoItem:
+    handler: src/todo-list/lambda/http/getTodoItem.handler
+    events:
+      - http:
+          method: get/{id}
+          path: todos
+          cors: true          
+          documentation:
+            summary: Gets a specific to do item.
+            descriptions: Gets a specific to do item.                        
 
   CreateTodoList:
     handler: src/todo-list/lambda/http/createTodoItem.handler

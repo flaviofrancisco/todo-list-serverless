@@ -1,14 +1,12 @@
-import { APIGatewayProxyHandler, APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
-import { deleteTodo } from '../../controllers/todoItemsController'
-import { DeleteTodoItemRequest } from '../../requests/deleteTodoItemRequest'
+import { APIGatewayProxyHandler, APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+import { deleteTodo } from '../../controllers/todoItemsController';
 
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   
-    console.log('Processing event: ', event)
+  console.log('Processing event: ', event)
 
-  const deleteTodoItemRequest: DeleteTodoItemRequest = JSON.parse(event.body)
-
-  const success = await deleteTodo(deleteTodoItemRequest.id)
+  const todoItemId = event.pathParameters.id;
+  const success = await deleteTodo(todoItemId);
 
   try {
     if (success) {
