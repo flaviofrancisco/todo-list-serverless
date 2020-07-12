@@ -1,0 +1,60 @@
+service:
+  name: todo-list-app
+
+plugins:
+  - serverless-webpack  
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'eu-central-1'}
+
+  environment:
+    TODOS_TABLE: todoItems-${self:provider.stage}
+
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Scan
+        - dynamodb:Query
+        - dynamodb:PutItem
+        - dynamodb:DeleteItem        
+      Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}     
+
+functions:
+  GetTodoList:
+    handler: src/todo-list/lambda/http/getTodoList.handler
+    events:
+      - http:
+          method: get
+          path: todos
+          cors: true
+          documentation:
+            summary: Gets a list of to do tasks.
+            descriptions: Fetches a list of things to do.
+  CreateTodoList:
+    handler: src/todo-list/lambda/http/createTodoItem.handler
+    events:
+      - http:
+          method: post
+          path: todos
+          cors: true
+          documentation:
+            summary: Create a new to do item.
+            descriptions: Using this method you can create a new to do task.            
+
+resources:
+  Resources:
+    TodosDynamoDBTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:provider.environment.TODOS_TABLE}
