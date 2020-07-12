@@ -88,8 +88,8 @@ functions:
     handler: src/todo-list/lambda/http/deleteTodoItem.handler
     events:
       - http:
-          method: delete/{id}
-          path: todos
+          method: delete
+          path: todos/{id}
           cors: true          
           documentation:
             summary: Deletes a to do item.
@@ -99,8 +99,8 @@ functions:
     handler: src/todo-list/lambda/http/getTodoItem.handler
     events:
       - http:
-          method: get/{id}
-          path: todos
+          method: get
+          path: todos/{id}
           cors: true          
           documentation:
             summary: Gets a specific to do item.
