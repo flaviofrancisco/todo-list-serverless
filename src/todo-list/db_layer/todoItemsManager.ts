@@ -5,6 +5,8 @@ import { TodoItem } from './todoItems'
 const AWSXRay = require('aws-xray-sdk')
 const XAWS = AWSXRay.captureAWS(AWS)
 
+const userIdIndex = process.env.USER_ID_INDEX
+
 export class ToDoItemsManager {
     
     constructor(
@@ -12,11 +14,18 @@ export class ToDoItemsManager {
         private readonly todoItemsTable = process.env.TODOS_TABLE
     ) { }
 
-    async getAllToDoItems(): Promise<TodoItem[]> {
+    async getAllToDoItems(userId: string): Promise<TodoItem[]> {
+        
         console.log('Getting all to do items')
 
-        const result = await this.docClient.scan({
-          TableName: this.todoItemsTable
+        const result = await this.docClient.query({
+          TableName: this.todoItemsTable,
+          IndexName: userIdIndex,
+          KeyConditionExpression: 'userId = :userId',
+          ExpressionAttributeValues: {
+            ':userId' : userId
+          },
+          ScanIndexForward: false
         }).promise()
     
         const items = result.Items
