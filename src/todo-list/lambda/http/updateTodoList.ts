@@ -1,24 +1,24 @@
 import { APIGatewayProxyHandler, APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
-import { createTodo } from '../../controllers/todoItemsController'
-import { CreateTodoRequest } from '../../requests/CreateToDoItemRequest'
+import { UpdateTodoRequest } from '../../requests/UpdateTodoItemRequest'
+import { updateTodo } from '../../controllers/todoItemsController'
 
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   
-  console.log('Processing event: ', event)
+    console.log('Processing event: ', event)
 
-  const newTodoItem: CreateTodoRequest = JSON.parse(event.body)
+  const todoItemToUpdate: UpdateTodoRequest = JSON.parse(event.body)
 
-  const newItem = await createTodo(newTodoItem)
+  const todoItemUpdated = await updateTodo(todoItemToUpdate)
 
   try {
     return {
-      statusCode: 201,
+      statusCode: 200,
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Credentials': true
       },
       body: JSON.stringify({
-        newItem
+        todoItemUpdated
       })
     }  
   } catch (error) {

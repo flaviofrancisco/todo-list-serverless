@@ -1,6 +1,7 @@
 import * as AWS  from 'aws-sdk'
 import { DocumentClient } from 'aws-sdk/clients/dynamodb'
 import { TodoItem } from './todoItems'
+import { UpdateTodoItem } from './updateTodoItem'
 
 const AWSXRay = require('aws-xray-sdk')
 const XAWS = AWSXRay.captureAWS(AWS)
@@ -39,8 +40,54 @@ export class ToDoItemsManager {
         }).promise()
     
         return todoItem
-      }        
-        
+      }  
+      
+      async updateTodo(todoItem: UpdateTodoItem): Promise<TodoItem> {
+        await this.docClient.update({
+          TableName:this.todoItemsTable,
+          Key:{
+              "id": todoItem.id,
+              "userId": todoItem.userId
+          },
+          UpdateExpression: "set dueDate = :dueDate, #n=:n, done=:done, attachmentUrl=:attachmentUrl",
+          ExpressionAttributeValues:{
+              ":dueDate":todoItem.dueDate,
+              ":n":todoItem.name,
+              ":done":todoItem.done,
+              ":attachmentUrl":todoItem.attachmentUrl
+          },
+          ExpressionAttributeNames: {
+            "#n": "name"
+          },
+          ReturnValues:"UPDATED_NEW"
+        }).promise()
+
+        return await this.getTodo(todoItem.id, todoItem.userId);
+
+      }
+      
+      async getTodo(id: string, userId: string): Promise<TodoItem> {
+
+        const result = await this.docClient.get({
+          TableName: this.todoItemsTable,
+          Key:{
+              id: id,
+              userId: userId
+          }
+        }).promise()
+
+        console.log('getTodo', result);
+
+        return {
+          id: result.Item['id'],
+          createdAt: result.Item['createdAt'],
+          done: result.Item['done'],
+          dueDate: result.Item['dueDate'],
+          name: result.Item['name'],
+          userId: result.Item['userId'],
+          attachmentUrl: result.Item['attachmentUrl']
+        };
+      }
 }
 
 function createDynamoDBClient() {
@@ -53,4 +100,4 @@ function createDynamoDBClient() {
     }
   
     return new XAWS.DynamoDB.DocumentClient()
-  }
+  }  
