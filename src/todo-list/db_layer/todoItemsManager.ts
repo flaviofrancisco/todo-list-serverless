@@ -1,5 +1,5 @@
 import * as AWS  from 'aws-sdk'
-import * as uuid from 'uuid'
+//import * as uuid from 'uuid'
 import { DocumentClient } from 'aws-sdk/clients/dynamodb'
 import { TodoItem } from './todoItems'
 import { UpdateTodoItem } from './updateTodoItem'
@@ -9,12 +9,12 @@ const AWSXRay = require('aws-xray-sdk')
 const XAWS = AWSXRay.captureAWS(AWS)
 
 const userIdIndex = process.env.USER_ID_INDEX
-const urlExpiration = process.env.SIGNED_URL_EXPIRATION
-const bucketName = process.env.IMAGES_S3_BUCKET
+// const urlExpiration = process.env.SIGNED_URL_EXPIRATION
+// const bucketName = process.env.IMAGES_S3_BUCKET
 
-const s3 = new XAWS.S3({
-  signatureVersion: 'v4'
-})
+// const s3 = new XAWS.S3({
+//   signatureVersion: 'v4'
+// })
 
 export class ToDoItemsManager {
     
@@ -43,10 +43,9 @@ export class ToDoItemsManager {
       
       async createTodo(todoItem: TodoItem): Promise<CreateTodoResponse> {
 
-        const imageId = uuid.v4()
-        const uploadUrl = getUploadUrl(imageId);
+        //const imageId = uuid.v4()
 
-        todoItem.attachmentUrl = `https://${bucketName}.s3.amazonaws.com/${imageId}`;
+        //todoItem.attachmentUrl = getUploadUrl(imageId);
 
         await this.docClient.put({
           TableName: this.todoItemsTable,
@@ -54,8 +53,7 @@ export class ToDoItemsManager {
         }).promise()
     
         return {
-          ...todoItem,
-          uploadUrl
+          ...todoItem
         }
       }  
       
@@ -63,8 +61,8 @@ export class ToDoItemsManager {
         await this.docClient.update({
           TableName:this.todoItemsTable,
           Key:{
-              "id": todoItem.id,
-              "userId": todoItem.userId
+              todoId: todoItem.id,
+              userId: todoItem.userId
           },
           UpdateExpression: "set dueDate = :dueDate, #n=:n, done=:done, attachmentUrl=:attachmentUrl",
           ExpressionAttributeValues:{
@@ -88,7 +86,7 @@ export class ToDoItemsManager {
         const result = await this.docClient.get({
           TableName: this.todoItemsTable,
           Key:{
-              id: id,
+              todoId: id,
               userId: userId
           }
         }).promise()
@@ -96,7 +94,7 @@ export class ToDoItemsManager {
         console.log('getTodo', result);
 
         return {
-          id: result.Item['id'],
+          todoId: result.Item['id'],
           createdAt: result.Item['createdAt'],
           done: result.Item['done'],
           dueDate: result.Item['dueDate'],
@@ -110,7 +108,7 @@ export class ToDoItemsManager {
         const result = await this.docClient.delete({
           TableName: this.todoItemsTable,
           Key:{
-              id: id,
+              todoId: id,
               userId: userId
           }
         }).promise();
@@ -131,10 +129,10 @@ function createDynamoDBClient() {
     return new XAWS.DynamoDB.DocumentClient()
   }  
 
-  function getUploadUrl(imageId: string) {
-    return s3.getSignedUrl('putObject', {
-      Bucket: bucketName,
-      Key: imageId,
-      Expires: +urlExpiration
-    })
-  }
+  // function getUploadUrl(imageId: string) {
+  //   return s3.getSignedUrl('putObject', {
+  //     Bucket: bucketName,
+  //     Key: imageId,
+  //     Expires: +urlExpiration
+  //   })
+  // }

@@ -1,5 +1,5 @@
 service:
-  name: todo-list-app-dev
+  name: todo-list-app
 
 plugins:
   - serverless-webpack
@@ -17,9 +17,11 @@ provider:
   environment:
     TODOS_TABLE: todos-${self:provider.stage}  
     USER_ID_INDEX: UserIdIndex
-    IMAGES_S3_BUCKET: todos-images-677708413141-${self:provider.stage}
+    IMAGES_S3_BUCKET: todos-images-677708413141-${self:provider.stage}-v2
     SIGNED_URL_EXPIRATION: 300
     CONNECTIONS_TABLE: Connections-${self:provider.stage}
+    AUTH_0_SECRET_ID: Auth0Secret-${self:provider.stage}
+    AUTH_0_SECRET_FIELD: auth0Secret    
 
   iamRoleStatements:
     - Effect: Allow
@@ -45,7 +47,15 @@ provider:
       Action:
         - s3:PutObject
         - s3:GetObject
-      Resource: arn:aws:s3:::${self:provider.environment.IMAGES_S3_BUCKET}/*                   
+      Resource: arn:aws:s3:::${self:provider.environment.IMAGES_S3_BUCKET}/*
+    - Effect: Allow
+      Action:
+        - secretsmanager:GetSecretValue
+      Resource: !Ref Auth0Secret
+    - Effect: Allow
+      Action:
+        - kms:Decrypt
+      Resource: !GetAtt KMSKey.Arn                         
 
 custom:
   topicName: imagesTopic-${self:provider.stage}
@@ -62,13 +72,21 @@ custom:
         schema: ${file(models/create-todo-request.json)}
 
 functions:
+
+  RS256Auth:
+    handler: src/auth/lambda/rs256Auth0Authorizer.handler
+
+  Auth:
+    handler: src/auth/lambda/auth0Authorizer.handler  
+
   GetTodoList:
     handler: src/todo-list/lambda/http/getTodoList.handler
     events:
       - http:
           method: get
           path: todos
-          cors: true          
+          cors: true
+          authorizer: RS256Auth          
           documentation:
             summary: Gets a list of to do tasks.
             descriptions: Fetches a list of things to do.
@@ -79,7 +97,8 @@ functions:
       - http:
           method: put
           path: todos
-          cors: true          
+          cors: true
+          authorizer: RS256Auth         
           documentation:
             summary: Updates a to do item.
             descriptions: Updates a to do item.
@@ -90,7 +109,8 @@ functions:
       - http:
           method: delete
           path: todos/{id}
-          cors: true          
+          cors: true
+          authorizer: RS256Auth          
           documentation:
             summary: Deletes a to do item.
             descriptions: Deletes a to do item.
@@ -100,19 +120,21 @@ functions:
     events:
       - http:
           method: get
-          path: todos/{id}
-          cors: true          
+          path: todos/{id}/edit
+          cors: true
+          authorizer: RS256Auth          
           documentation:
             summary: Gets a specific to do item.
             descriptions: Gets a specific to do item.                        
 
-  CreateTodoList:
+  CreateTodoItem:
     handler: src/todo-list/lambda/http/createTodoItem.handler
     events:
       - http:
           method: post
           path: todos
           cors: true
+          authorizer: RS256Auth
           reqValidatorName: RequestBodyValidator
           documentation:
             summary: Create a new to do item.
@@ -151,7 +173,19 @@ functions:
 
 resources:
   Resources:
-    
+
+    GatewayResponseDefault4XX:
+      Type: AWS::ApiGateway::GatewayResponse
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+          gatewayresponse.header.Access-Control-Allow-Methods: "'GET,OPTIONS,POST'"
+        ResponseType: DEFAULT_4XX
+        RestApiId:
+          Ref: ApiGatewayRestApi 
+
+
     RequestBodyValidator:
       Type: AWS::ApiGateway::RequestValidator
       Properties:
@@ -161,16 +195,16 @@ resources:
         ValidateRequestBody: true
         ValidateRequestParameters: false
 
-    TodosDynamoDBTable:
+    TodosItemDynamoDBTable:
       Type: AWS::DynamoDB::Table
       Properties:
         AttributeDefinitions:
-          - AttributeName: id
+          - AttributeName: todoId
             AttributeType: S
           - AttributeName: userId
             AttributeType: S            
         KeySchema:
-          - AttributeName: id
+          - AttributeName: todoId
             KeyType: HASH
           - AttributeName: userId
             KeyType: RANGE
@@ -258,4 +292,38 @@ resources:
       Type: AWS::SNS::Topic
       Properties:
         DisplayName: Image bucket topic
-        TopicName: ${self:custom.topicName}                                      
+        TopicName: ${self:custom.topicName}
+        
+    KMSKey:
+      Type: AWS::KMS::Key
+      Properties:
+        Description: KMS key to encrypt Auth0 secret
+        KeyPolicy:
+          Version: '2012-10-17'
+          Id: key-default-1
+          Statement:
+            - Sid: Allow administration of the key
+              Effect: Allow
+              Principal:
+                AWS:
+                  Fn::Join:
+                  - ':'
+                  - - 'arn:aws:iam:'
+                    - Ref: AWS::AccountId
+                    - 'root'
+              Action:
+                - 'kms:*'
+              Resource: '*'
+
+    KMSKeyAlias:
+      Type: AWS::KMS::Alias
+      Properties:
+        AliasName: alias/auth0Key-${self:provider.stage}
+        TargetKeyId: !Ref KMSKey
+
+    Auth0Secret:
+      Type: AWS::SecretsManager::Secret
+      Properties:
+        Name: ${self:provider.environment.AUTH_0_SECRET_ID}
+        Description: 'Auth0 secret'
+        KmsKeyId: !Ref KMSKey        

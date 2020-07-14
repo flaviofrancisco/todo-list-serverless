@@ -2,25 +2,27 @@ import * as uuid from 'uuid'
 
 import { ToDoItemsManager } from "../db_layer/todoItemsManager";
 import { TodoItem } from "../db_layer/todoItems";
-import { CreateTodoRequest } from "../requests/createToDoItemRequest";
-import { UpdateTodoRequest } from '../requests/updateTodoItemRequest';
+import { CreateTodoItemRequest } from "../requests/CreateTodoItemRequest";
+import { UpdateTodoItemRequest } from '../requests/UpdateTodoItemRequest';
+import { getUserId } from '../../auth/utils';
 
 const todoItemsManager = new ToDoItemsManager()
-const userId = 'c9cc949f-dfec-4714-b25d-b0e239e01873'
 
-export async function getAllTodoItems(): Promise<TodoItem[]> {
+export async function getAllTodoItems(jwtToken: string): Promise<TodoItem[]> {
+    const userId = getUserId(jwtToken) 
     return todoItemsManager.getAllToDoItems(userId);
 }
 
 export async function createTodo(
-    createTodoRequest: CreateTodoRequest    
+    createTodoRequest: CreateTodoItemRequest,
+    jwtToken: string    
   ): Promise<TodoItem> {
   
     const itemId = uuid.v4()
-    //const userId = getUserId(jwtToken) 
+    const userId = getUserId(jwtToken) 
 
     return await todoItemsManager.createTodo({
-      id: itemId,
+      todoId: itemId,
       userId: userId,
       name: createTodoRequest.name,      
       createdAt: new Date().toISOString(),
@@ -30,8 +32,10 @@ export async function createTodo(
   }
 
 export async function updateTodo(
-  updateTodoRequest: UpdateTodoRequest
+  updateTodoRequest: UpdateTodoItemRequest,
+  jwtToken: string
 ): Promise<TodoItem> {
+  const userId = getUserId(jwtToken)
   return await todoItemsManager.updateTodo({
     done: updateTodoRequest.done,
     dueDate: updateTodoRequest.dueDate,
@@ -43,13 +47,17 @@ export async function updateTodo(
 }
 
 export async function deleteTodo(
-  id:string
+  id:string,
+  jwtToken: string
 ): Promise<boolean> {
+  const userId = getUserId(jwtToken)
   return await todoItemsManager.deleteTodo(id, userId);
 }
 
 export async function getTodo(
-  id:string
+  id:string,
+  jwtToken: string
 ): Promise<TodoItem> {
+  const userId = getUserId(jwtToken)
   return await todoItemsManager.getTodo(id, userId);
 }

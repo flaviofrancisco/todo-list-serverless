@@ -1,18 +1,26 @@
-import { APIGatewayProxyHandler, APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
 import { getTodo } from '../../controllers/todoItemsController'
 
-export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+import * as middy from 'middy'
+import { cors } from 'middy/middlewares'
+
+export const handler = middy(async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     
     console.log('Processing event: ', event)
 
     const todoItemId = event.pathParameters.id;
-    const item = await getTodo(todoItemId)
+    const authorization = event.headers.Authorization
+    const split = authorization.split(' ')
+    const jwtToken = split[1]
+
+    const item = await getTodo(todoItemId, jwtToken)
 
     try {
         return {
             statusCode: 200,
             headers: {
-                'Access-Control-Allow-Origin': '*' 
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Credentials': true
             },
             body: JSON.stringify({ item })
         }    
@@ -20,10 +28,17 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
         return {
             statusCode: 500,
             headers: {
-                'Access-Control-Allow-Origin': '*' 
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Credentials': true 
             },
             body: JSON.stringify({ error })
         }
     }
 
-}
+})
+
+handler.use(
+    cors({
+      credentials: true
+    })
+  )

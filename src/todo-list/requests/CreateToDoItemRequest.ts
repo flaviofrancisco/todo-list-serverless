@@ -1,4 +1,4 @@
-export interface CreateTodoRequest {
+export interface CreateTodoItemRequest {
     name: string
     dueDate: string
   }
