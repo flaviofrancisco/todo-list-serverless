@@ -20,47 +20,7 @@ provider:
     TODO_ID_INDEX: TodoIdIndex
     IMAGES_S3_BUCKET: todos-images-677708413141-${self:provider.stage}-v2
     SIGNED_URL_EXPIRATION: 300
-    CONNECTIONS_TABLE: Connections-${self:provider.stage}
-    AUTH_0_SECRET_ID: Auth0Secret-${self:provider.stage}
-    AUTH_0_SECRET_FIELD: auth0Secret    
-
-  iamRoleStatements:
-    - Effect: Allow
-      Action:
-        - dynamodb:Scan
-        - dynamodb:Query
-        - dynamodb:PutItem
-        - dynamodb:UpdateItem
-        - dynamodb:GetItem
-        - dynamodb:DeleteItem       
-      Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
-    - Effect: Allow
-      Action:
-        - dynamodb:Scan
-        - dynamodb:PutItem
-        - dynamodb:DeleteItem
-      Resource: arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.CONNECTIONS_TABLE}      
-    - Effect: Allow
-      Action:
-        - dynamodb:Query
-      Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}/index/${self:provider.environment.USER_ID_INDEX}  
-    - Effect: Allow
-      Action:
-        - dynamodb:Query
-      Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}/index/${self:provider.environment.TODO_ID_INDEX}          
-    - Effect: Allow
-      Action:
-        - s3:PutObject
-        - s3:GetObject
-      Resource: arn:aws:s3:::${self:provider.environment.IMAGES_S3_BUCKET}/*
-    - Effect: Allow
-      Action:
-        - secretsmanager:GetSecretValue
-      Resource: !Ref Auth0Secret
-    - Effect: Allow
-      Action:
-        - kms:Decrypt
-      Resource: !GetAtt KMSKey.Arn                         
+    CONNECTIONS_TABLE: Connections-${self:provider.stage}                      
 
 custom:
   topicName: imagesTopic-${self:provider.stage}
@@ -86,6 +46,15 @@ functions:
 
   GetTodoList:
     handler: src/todo-list/lambda/http/getTodoList.handler
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:Query       
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+      - Effect: Allow
+        Action:
+          - dynamodb:Query
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}/index/${self:provider.environment.USER_ID_INDEX}           
     events:
       - http:
           method: get
@@ -98,6 +67,11 @@ functions:
 
   Attachment:
     handler: src/todo-list/lambda/http/attachment.handler
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:GetItem      
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}            
     events:
       - http:
           method: post
@@ -110,6 +84,17 @@ functions:
 
   UpdateTodoItem:
     handler: src/todo-list/lambda/http/updateTodoItem.handler
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:GetItem
+          - dynamodb:UpdateItem       
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+      - Effect: Allow
+        Action:
+          - s3:PutObject
+          - s3:GetObject
+        Resource: arn:aws:s3:::${self:provider.environment.IMAGES_S3_BUCKET}/*            
     events:
       - http:
           method: patch
@@ -122,6 +107,11 @@ functions:
             
   DeleteTodoItem:
     handler: src/todo-list/lambda/http/deleteTodoItem.handler
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:DeleteItem       
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}    
     events:
       - http:
           method: delete
@@ -133,7 +123,12 @@ functions:
             descriptions: Deletes a to do item.
 
   GetTodoItem:
-    handler: src/todo-list/lambda/http/getTodoItem.handler
+    handler: src/todo-list/lambda/http/getTodoItem.handler    
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:GetItem       
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}   
     events:
       - http:
           method: get
@@ -146,6 +141,16 @@ functions:
 
   CreateTodoItem:
     handler: src/todo-list/lambda/http/createTodoItem.handler
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:PutItem      
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+      - Effect: Allow
+        Action:
+          - s3:PutObject
+          - s3:GetObject
+        Resource: arn:aws:s3:::${self:provider.environment.IMAGES_S3_BUCKET}/*            
     events:
       - http:
           method: post
@@ -178,6 +183,15 @@ functions:
 
   SaveImage:
     handler: src/s3/saveImage.handler
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:UpdateItem       
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+      - Effect: Allow
+        Action:
+        - dynamodb:Query
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}/index/${self:provider.environment.TODO_ID_INDEX} 
     events:
       - sns:
           arn:
@@ -191,12 +205,22 @@ functions:
     
   ConnectHandler:
     handler: src/websocket/connect.handler
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:PutItem
+        Resource: arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.CONNECTIONS_TABLE}    
     events:
       - websocket:
           route: $connect
 
   DisconnectHandler:
     handler: src/websocket/disconnect.handler
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:DeleteItem
+        Resource: arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.CONNECTIONS_TABLE}    
     events:
       - websocket:
           route: $disconnect    
@@ -329,37 +353,3 @@ resources:
       Properties:
         DisplayName: Image bucket topic
         TopicName: ${self:custom.topicName}
-        
-    KMSKey:
-      Type: AWS::KMS::Key
-      Properties:
-        Description: KMS key to encrypt Auth0 secret
-        KeyPolicy:
-          Version: '2012-10-17'
-          Id: key-default-1
-          Statement:
-            - Sid: Allow administration of the key
-              Effect: Allow
-              Principal:
-                AWS:
-                  Fn::Join:
-                  - ':'
-                  - - 'arn:aws:iam:'
-                    - Ref: AWS::AccountId
-                    - 'root'
-              Action:
-                - 'kms:*'
-              Resource: '*'
-
-    KMSKeyAlias:
-      Type: AWS::KMS::Alias
-      Properties:
-        AliasName: alias/auth0Key-${self:provider.stage}
-        TargetKeyId: !Ref KMSKey
-
-    Auth0Secret:
-      Type: AWS::SecretsManager::Secret
-      Properties:
-        Name: ${self:provider.environment.AUTH_0_SECRET_ID}
-        Description: 'Auth0 secret'
-        KmsKeyId: !Ref KMSKey        
