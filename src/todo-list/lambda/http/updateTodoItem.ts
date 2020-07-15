@@ -20,7 +20,7 @@ export const handler = middy(async (event: APIGatewayProxyEvent): Promise<APIGat
     return {
       statusCode: 200,
       body: JSON.stringify({
-        todoItemUpdated
+        ...todoItemUpdated
       })
     }  
   } catch (error) {

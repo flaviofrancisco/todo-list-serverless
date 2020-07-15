@@ -1,5 +1,4 @@
 import * as AWS  from 'aws-sdk'
-//import * as uuid from 'uuid'
 import { DocumentClient } from 'aws-sdk/clients/dynamodb'
 import { TodoItem } from './todoItems'
 import { UpdateTodoItem } from './updateTodoItem'
@@ -9,12 +8,13 @@ const AWSXRay = require('aws-xray-sdk')
 const XAWS = AWSXRay.captureAWS(AWS)
 
 const userIdIndex = process.env.USER_ID_INDEX
-// const urlExpiration = process.env.SIGNED_URL_EXPIRATION
-// const bucketName = process.env.IMAGES_S3_BUCKET
+const todoIdIndex = process.env.TODO_ID_INDEX
+const urlExpiration = process.env.SIGNED_URL_EXPIRATION
+const bucketName = process.env.IMAGES_S3_BUCKET
 
-// const s3 = new XAWS.S3({
-//   signatureVersion: 'v4'
-// })
+const s3 = new XAWS.S3({
+  signatureVersion: 'v4'
+})
 
 export class ToDoItemsManager {
     
@@ -43,9 +43,7 @@ export class ToDoItemsManager {
       
       async createTodo(todoItem: TodoItem): Promise<CreateTodoResponse> {
 
-        //const imageId = uuid.v4()
-
-        //todoItem.attachmentUrl = getUploadUrl(imageId);
+        todoItem.uploadUrl = getUploadUrl(todoItem.todoId);
 
         await this.docClient.put({
           TableName: this.todoItemsTable,
@@ -55,7 +53,28 @@ export class ToDoItemsManager {
         return {
           ...todoItem
         }
-      }  
+      } 
+      
+      async saveImage(todoId: string): Promise<void> {
+        
+        const todoItem = await this.getTodoById(todoId);
+
+        if (!todoItem) { return; }
+
+        await this.docClient.update({
+          TableName:this.todoItemsTable,
+          Key:{
+              todoId: todoItem.todoId,
+              userId: todoItem.userId
+          },
+          UpdateExpression: "set attachmentUrl=:attachmentUrl",
+          ExpressionAttributeValues:{
+              ":attachmentUrl":`https://${bucketName}.s3.amazonaws.com/${todoItem.todoId}`
+          },
+          ReturnValues:"UPDATED_NEW"
+        }).promise()  
+         
+      }
       
       async updateTodo(todoItem: UpdateTodoItem): Promise<TodoItem> {
         await this.docClient.update({
@@ -81,6 +100,26 @@ export class ToDoItemsManager {
 
       }
       
+      async getTodoById(id: string): Promise<TodoItem> {
+
+        const result = await this.docClient.query({
+          TableName: this.todoItemsTable,
+          IndexName: todoIdIndex,
+          KeyConditionExpression: 'todoId = :id',
+          ExpressionAttributeValues: {
+            ':id' : id
+          },
+          ScanIndexForward: false
+        }).promise()
+
+        console.log('Todo Item Query...', result);  
+
+        if (result.Items && result.Items.length > 0) {
+          return this.getTodoItem(result.Items[0]);
+        }
+        return null;    
+      }
+
       async getTodo(id: string, userId: string): Promise<TodoItem> {
 
         const result = await this.docClient.get({
@@ -93,16 +132,21 @@ export class ToDoItemsManager {
 
         console.log('getTodo', result);
 
-        return {
-          todoId: result.Item['id'],
-          createdAt: result.Item['createdAt'],
-          done: result.Item['done'],
-          dueDate: result.Item['dueDate'],
-          name: result.Item['name'],
-          userId: result.Item['userId'],
-          attachmentUrl: result.Item['attachmentUrl']
-        };
+        return this.getTodoItem(result.Item);
       }
+
+  private getTodoItem(item: any): TodoItem | PromiseLike<TodoItem> {
+    return {
+      todoId: item['todoId'],
+      createdAt: item['createdAt'],
+      done: item['done'],
+      dueDate: item['dueDate'],
+      name: item['name'],
+      userId: item['userId'],
+      attachmentUrl: item['attachmentUrl'],
+      uploadUrl: item['uploadUrl']
+    }
+  }
 
       async deleteTodo(id: string, userId: string): Promise<boolean> {
         const result = await this.docClient.delete({
@@ -129,10 +173,10 @@ function createDynamoDBClient() {
     return new XAWS.DynamoDB.DocumentClient()
   }  
 
-  // function getUploadUrl(imageId: string) {
-  //   return s3.getSignedUrl('putObject', {
-  //     Bucket: bucketName,
-  //     Key: imageId,
-  //     Expires: +urlExpiration
-  //   })
-  // }
+  function getUploadUrl(key: string) {
+    return s3.getSignedUrl('putObject', {
+      Bucket: bucketName,
+      Key: key,
+      Expires: +urlExpiration
+    })
+  }

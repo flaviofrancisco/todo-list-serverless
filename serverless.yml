@@ -17,6 +17,7 @@ provider:
   environment:
     TODOS_TABLE: todos-${self:provider.stage}  
     USER_ID_INDEX: UserIdIndex
+    TODO_ID_INDEX: TodoIdIndex
     IMAGES_S3_BUCKET: todos-images-677708413141-${self:provider.stage}-v2
     SIGNED_URL_EXPIRATION: 300
     CONNECTIONS_TABLE: Connections-${self:provider.stage}
@@ -42,7 +43,11 @@ provider:
     - Effect: Allow
       Action:
         - dynamodb:Query
-      Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}/index/${self:provider.environment.USER_ID_INDEX}
+      Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}/index/${self:provider.environment.USER_ID_INDEX}  
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+      Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}/index/${self:provider.environment.TODO_ID_INDEX}          
     - Effect: Allow
       Action:
         - s3:PutObject
@@ -91,11 +96,23 @@ functions:
             summary: Gets a list of to do tasks.
             descriptions: Fetches a list of things to do.
 
+  Attachment:
+    handler: src/todo-list/lambda/http/attachment.handler
+    events:
+      - http:
+          method: post
+          path: todos/{id}/attachment
+          cors: true
+          authorizer: RS256Auth          
+          documentation:
+            summary: Gets the to do item upload url.
+            descriptions: Gets the to do item upload url.            
+
   UpdateTodoItem:
     handler: src/todo-list/lambda/http/updateTodoItem.handler
     events:
       - http:
-          method: put
+          method: patch
           path: todos
           cors: true
           authorizer: RS256Auth         
@@ -157,7 +174,20 @@ functions:
                 - Ref: AWS::Region
                 - Ref: AWS::AccountId
                 - ${self:custom.topicName}
-          topicName: ${self:custom.topicName}                           
+          topicName: ${self:custom.topicName}
+
+  SaveImage:
+    handler: src/s3/saveImage.handler
+    events:
+      - sns:
+          arn:
+            Fn::Join:
+              - ':'
+              - - arn:aws:sns
+                - Ref: AWS::Region
+                - Ref: AWS::AccountId
+                - ${self:custom.topicName}
+          topicName: ${self:custom.topicName}                                     
     
   ConnectHandler:
     handler: src/websocket/connect.handler
@@ -217,6 +247,12 @@ resources:
               KeyType: HASH
             Projection:
               ProjectionType: ALL
+          - IndexName: ${self:provider.environment.TODO_ID_INDEX}
+            KeySchema:
+            - AttributeName: todoId
+              KeyType: HASH
+            Projection:
+              ProjectionType: ALL                           
 
     WebSocketConnectionsDynamoDBTable:
       Type: AWS::DynamoDB::Table

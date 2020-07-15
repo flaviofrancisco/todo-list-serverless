@@ -14,13 +14,13 @@ export const handler = middy(async (event: APIGatewayProxyEvent): Promise<APIGat
   const split = authorization.split(' ')
   const jwtToken = split[1]
 
-  const newItem = await createTodo(newTodoItem, jwtToken)
+  const item = await createTodo(newTodoItem, jwtToken)
 
   try {
     return {
       statusCode: 201,
       body: JSON.stringify({
-        newItem
+        item
       })
     }  
   } catch (error) {

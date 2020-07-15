@@ -46,6 +46,10 @@ export async function updateTodo(
   });
 }
 
+export async function saveImage(imageId: string): Promise<void> {
+  await todoItemsManager.saveImage(imageId);
+}
+
 export async function deleteTodo(
   id:string,
   jwtToken: string

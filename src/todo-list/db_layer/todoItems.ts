@@ -6,4 +6,5 @@ export interface TodoItem {
     done: boolean
     attachmentUrl?: string
     userId: string
+    uploadUrl?: string
 }

@@ -31,7 +31,7 @@ export const handler: SNSHandler = async (event: SNSEvent) => {
   
   async function processS3Event(s3Event: S3Event) {
     for (const record of s3Event.Records) {
-      const key = record.s3.object.key
+      const key = record.s3.object.key;
       console.log('Processing S3 item with key: ', key)
   
       const connections = await docClient.scan({
