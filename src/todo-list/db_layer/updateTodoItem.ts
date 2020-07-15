@@ -4,5 +4,6 @@ export interface UpdateTodoItem {
     dueDate: string
     done: boolean
     attachmentUrl?: string,
-    userId: string
+    userId: string,
+    uploadUrl?: string
 }

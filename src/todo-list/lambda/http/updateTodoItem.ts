@@ -7,18 +7,20 @@ import { cors } from 'middy/middlewares'
 
 export const handler = middy(async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   
-    console.log('Processing event: ', event)
+  console.log('Processing event: ', event)
 
-  const todoItemToUpdate: UpdateTodoItemRequest = JSON.parse(event.body)
+  const todoItemId = event.pathParameters.id;
   const authorization = event.headers.Authorization
   const split = authorization.split(' ')
   const jwtToken = split[1]
-
+  
+  const todoItemToUpdate: UpdateTodoItemRequest = JSON.parse(event.body)
+  todoItemToUpdate.id = todoItemId;
   const todoItemUpdated = await updateTodo(todoItemToUpdate, jwtToken)
 
   try {
     return {
-      statusCode: 200,
+      statusCode: 201,
       body: JSON.stringify({
         ...todoItemUpdated
       })

@@ -59,7 +59,7 @@ export class ToDoItemsManager {
         
         const todoItem = await this.getTodoById(todoId);
 
-        if (!todoItem) { return; }
+        if (!todoItem) { return; }       
 
         await this.docClient.update({
           TableName:this.todoItemsTable,
@@ -77,18 +77,21 @@ export class ToDoItemsManager {
       }
       
       async updateTodo(todoItem: UpdateTodoItem): Promise<TodoItem> {
+
+        todoItem.uploadUrl = getUploadUrl(todoItem.id);
+
         await this.docClient.update({
           TableName:this.todoItemsTable,
           Key:{
               todoId: todoItem.id,
               userId: todoItem.userId
           },
-          UpdateExpression: "set dueDate = :dueDate, #n=:n, done=:done, attachmentUrl=:attachmentUrl",
+          UpdateExpression: "set dueDate = :dueDate, #n=:n, done=:done, uploadUrl=:uploadUrl",
           ExpressionAttributeValues:{
               ":dueDate":todoItem.dueDate,
               ":n":todoItem.name,
-              ":done":todoItem.done,
-              ":attachmentUrl":todoItem.attachmentUrl
+              ":done":todoItem.done,              
+              ":uploadUrl":todoItem.uploadUrl
           },
           ExpressionAttributeNames: {
             "#n": "name"

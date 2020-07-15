@@ -113,7 +113,7 @@ functions:
     events:
       - http:
           method: patch
-          path: todos
+          path: todos/{id}
           cors: true
           authorizer: RS256Auth         
           documentation:
