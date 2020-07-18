@@ -5,8 +5,8 @@ plugins:
   - serverless-webpack
   - serverless-reqvalidator-plugin
   - serverless-aws-documentation
-  - serverless-iam-roles-per-function    
-
+  - serverless-iam-roles-per-function
+  - serverless-plugin-tracing
 provider:
   name: aws
   runtime: nodejs12.x
