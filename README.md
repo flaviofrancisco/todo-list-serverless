@@ -2,6 +2,8 @@
 
 Project from the program: Cloud Developer Nanodegree - Udacity. This project is the backend part and works with the UI project: [To do List](https://github.com/flaviofrancisco/todo-list-ui).
 
+I am assuming that you aready know how to set up your account/ environment on: AWS Cloud; Auth0 and has already some Code Editor like Visual Studio Code and has already Node/ NPM installed in your PC.
+
 # Requirements
 
 - AWS Account;
@@ -58,3 +60,4 @@ export const authConfig = {
 ## [rs256Auth0Authorizer.ts](https://github.com/flaviofrancisco/todo-list-serverless/blob/master/src/auth/lambda/rs256Auth0Authorizer.ts)
 Set up your RSA 256 Certificate
 
+The values on this project are just examples. The Auth0 App Settings listed here are no longer valid.
