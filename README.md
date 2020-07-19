@@ -55,4 +55,6 @@ export const authConfig = {
 }
 ```
 
+## [rs256Auth0Authorizer.ts](https://github.com/flaviofrancisco/todo-list-serverless/blob/master/src/auth/lambda/rs256Auth0Authorizer.ts)
+Set up your RSA 256 Certificate
 
