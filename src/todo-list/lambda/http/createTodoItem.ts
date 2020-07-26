@@ -1,6 +1,6 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
 import { createTodo } from '../../controllers/todoItemsController'
-import { CreateTodoItemRequest } from '../../requests/createTodoItemRequest'
+import { CreateTodoItemRequest } from '../../requests/CreateTodoItemRequest'
 
 import * as middy from 'middy'
 import { cors } from 'middy/middlewares'
