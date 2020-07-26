@@ -3,13 +3,16 @@
     "lib": [
       "es2017"
     ],
-    "moduleResolution": "classic",
+    "moduleResolution": "node",
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "sourceMap": true,
     "target": "es2017",
     "outDir": "lib"
-  },  
+  },
+  "include": [
+    "src/**/*.ts"
+  ],  
   "exclude": [
     "node_modules"
   ]
