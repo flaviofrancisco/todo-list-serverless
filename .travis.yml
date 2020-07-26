@@ -9,5 +9,5 @@ install:
   - npm install --save serverless-aws-documentation
   - npm install --save serverless-iam-roles-per-function
   - npm install --save serverless-plugin-tracing
-script:
+after_success:
   - serverless deploy -v
