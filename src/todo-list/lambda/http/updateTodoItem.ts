@@ -1,5 +1,5 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
-import { UpdateTodoItemRequest } from '../../requests/UpdateTodoItemRequest'
+import { UpdateTodoItemRequest } from '../../requests/updateTodoItemRequest'
 import { updateTodo } from '../../controllers/todoItemsController'
 
 import * as middy from 'middy'

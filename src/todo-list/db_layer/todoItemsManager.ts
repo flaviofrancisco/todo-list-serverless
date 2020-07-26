@@ -2,7 +2,7 @@ import * as AWS  from 'aws-sdk'
 import { DocumentClient } from 'aws-sdk/clients/dynamodb'
 import { TodoItem } from './todoItems'
 import { UpdateTodoItem } from './updateTodoItem'
-import { CreateTodoResponse } from '../responses/CreateToDoItemResponse'
+import { CreateTodoResponse } from '../responses/createToDoItemResponse'
 
 const AWSXRay = require('aws-xray-sdk')
 const XAWS = AWSXRay.captureAWS(AWS)
