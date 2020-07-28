@@ -27,12 +27,14 @@ You will need to set up the following Environment Variables:
 - AWS_SECRET_ACCESS_KEY
 - AWS_USER
 
-Set up your AWS credentials on the Serverless Framework:
+## Serverless 
+
+Set up your AWS credentials to use the Serverless Framework locally:
 
 Example from the [Serverless documentation](https://www.serverless.com/framework/docs/providers/aws/guide/credentials/).
 
 ```
-serverless config credentials --provider aws --key AKIAIOSFODNN7EXAMPLE --secret wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+$ serverless config credentials --provider aws --key AKIAIOSFODNN7EXAMPLE --secret wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 ```
 
 Install the Serverless Plugins:
