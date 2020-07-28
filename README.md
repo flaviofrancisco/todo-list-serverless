@@ -49,10 +49,24 @@ serverless plugin install --name serverless-plugin-tracing
 
 Once every thing is installed and your credentials are installed you need to update the following files:
 
-## serverless.yml
+### serverless.yml
 
 - Update your AWS region: provider.region;
 - Check the environment variables values and update accordingly with your needs.
+
+### Manual Deployment
+
+Once your settings are done you may use the following command below to deploy your application manually.
+
+```
+serverless deploy -v 
+```
+
+In orther to define a stage use the parameter *--stage* the default stage is 'dev'.
+
+```
+serverless deploy -v --stage production
+```
 
 ## [config.ts](https://github.com/flaviofrancisco/todo-list-ui/blob/master/src/config.ts) from the UI project.
 
