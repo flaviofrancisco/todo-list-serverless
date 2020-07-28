@@ -7,6 +7,7 @@ I am assuming that you aready know how to set up your account/ environment on: A
 # Requirements
 
 - AWS Account;
+- Travis CI account (CI/CD tool);
 - Auth0 Account and
 - Serverless Framework.
 
@@ -17,6 +18,14 @@ After clonning this project you need to install the project dependencies
 ```
 $ project_folder_location/ npm install
 ```
+
+## Travis CI
+
+You will need to set up the following Environment Variables:
+
+- AWS_ACCESS_KEY_ID
+- AWS_SECRET_ACCESS_KEY
+- AWS_USER
 
 Set up your AWS credentials on the Serverless Framework:
 
