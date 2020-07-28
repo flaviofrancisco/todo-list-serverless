@@ -2,8 +2,8 @@ import * as uuid from 'uuid'
 
 import { ToDoItemsManager } from "../db_layer/todoItemsManager";
 import { TodoItem } from "../db_layer/todoItems";
-import { CreateTodoItemRequest } from "../requests/CreateTodoItemRequest";
-import { UpdateTodoItemRequest } from '../requests/UpdateTodoItemRequest';
+import { CreateTodoItemRequest } from "../CreateTodoItemRequest";
+import { UpdateTodoItemRequest } from '../UpdateTodoItemRequest';
 import { getUserId } from '../../auth/utils';
 
 const todoItemsManager = new ToDoItemsManager()
